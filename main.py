@@ -18,7 +18,7 @@ import constants as ct
 ############################################################
 st.set_page_config(
     page_title=ct.APP_NAME,
-    layout="wide"  # ←★★★画面をワイドモードに設定
+    layout="wide"
 )
 
 logger = logging.getLogger(ct.LOGGER_NAME)
@@ -38,7 +38,7 @@ if "initialized" not in st.session_state:
     logger.info(ct.APP_BOOT_MESSAGE)
 
 ############################################################
-# サイドバーにモード選択ラジオボタンを表示
+# サイドバーにモード選択ラジオボタンと説明表示
 ############################################################
 with st.sidebar:
     st.markdown("## 利用目的")
@@ -48,7 +48,15 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
-    # サイドバー内の補足説明（修正後の画面に合わせる）
+    # ラジオボタンの直下にモード名をラベル表示
+    if st.session_state.mode == ct.ANSWER_MODE_1:
+        st.markdown("**社内文書検索**")
+    else:
+        st.markdown("**社内問い合わせ**")
+    
+    # 区切り線
+    st.markdown("---")
+    # サイドバー内の補足説明
     st.markdown(f"### 【「{ct.ANSWER_MODE_1}」を選択した場合】")
     st.info("入力内容と関連性が高い社内文書のありかを検索できます。")
     st.markdown("**【入力例】**\n\n社員の育成方針に関するMTGの議事録")
@@ -60,16 +68,17 @@ with st.sidebar:
 ############################################################
 # メイン画面の表示
 ############################################################
-# 中央寄せにするための空のカラムを左右に設置（レイアウト調整）
 col1, col2, col3 = st.columns([1, 4, 1])
 with col2:
-    cn.display_app_title()  # アプリのタイトル表示
-    cn.display_initial_ai_message()  # AIメッセージの初期表示
-
-    # 注意文を黄色で表示するために「st.warning()」を追加
+    cn.display_app_title()
+    # 初期AIメッセージはシンプルに。説明や例は表示しない（サイドバーだけでOK）
+    st.markdown(
+        """
+        こんにちは。私は社内文書の情報をもとに回答する生成AIチャットボットです。サイドバーで利用目的を選択し、画面下部のチャット欄からメッセージを送信してください。
+        """
+    )
     st.warning("具体的に入力したほうが期待通りの回答を得やすいです。")
 
-    # 会話ログ表示
     try:
         cn.display_conversation_log()
     except Exception as e:
@@ -77,10 +86,8 @@ with col2:
         st.error(utils.build_error_message(ct.CONVERSATION_LOG_ERROR_MESSAGE), icon=ct.ERROR_ICON)
         st.stop()
 
-    # チャット入力欄の表示
     chat_message = st.chat_input(ct.CHAT_INPUT_HELPER_TEXT)
 
-    # チャット送信時の処理
     if chat_message:
         logger.info({"message": chat_message, "application_mode": st.session_state.mode})
         with st.chat_message("user"):
